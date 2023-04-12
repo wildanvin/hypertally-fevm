@@ -184,14 +184,14 @@ function Inputs() {
     setDealID('Waiting for acceptance by SP...')
     cid = new CID(commP)
     var refresh = setInterval(async () => {
-      console.log(cid.bytes)
+      console.log(`Cid bytes: ${cid.bytes}`)
       if (cid === undefined) {
         setDealID('Error: CID not found')
         clearInterval(refresh)
       }
       console.log('Checking for deal ID...')
       const dealID = await dealClient.pieceDeals(cid.bytes)
-      console.log(dealID)
+      console.log(`The deal id is : ${dealID}`)
       if (dealID !== undefined && dealID !== '0') {
         // If your deal has already been submitted, you can get the deal ID by going to https://hyperspace.filfox.info/en/deal/<dealID>
         // The link will show up in the frontend: once a deal has been submitted, its deal ID stays constant. It will always have the same deal ID.
@@ -201,6 +201,92 @@ function Inputs() {
     }, 5000)
   }
 
+  const dealsLengthButton = () => {
+    return <button onClick={dealsLengthHandler}>Get total Deals</button>
+  }
+
+  const dealsLengthHandler = async () => {
+    try {
+      const { ethereum } = window
+      if (ethereum) {
+        const provider = new ethers.BrowserProvider(ethereum)
+        const signer = await provider.getSigner()
+        dealClient = new ethers.Contract(contractAddress, contractABI, signer)
+        console.log('Deal Index calling...')
+
+        const dealsLength = await dealClient.dealsLength()
+        console.log(`Deals length: ${dealsLength.toString()}`)
+      } else {
+        console.log("Ethereum object doesn't exist!")
+      }
+    } catch (error) {
+      console.log(error)
+      setErrorMessageSubmit(
+        'Something went wrong. ' + error.name + ' ' + error.message
+      )
+      return
+    }
+  }
+
+  const dealStatusButton = () => {
+    return <button onClick={dealStatusHandler}>Deal Status</button>
+  }
+
+  const dealStatusHandler = async () => {
+    try {
+      const { ethereum } = window
+      if (ethereum) {
+        cid = new CID(commP)
+
+        const provider = new ethers.BrowserProvider(ethereum)
+        const signer = await provider.getSigner()
+
+        const contractAbiManual = [
+          'function pieceStatus(bytes memory) public view returns (uint8)',
+        ]
+        dealClient = new ethers.Contract(
+          contractAddress,
+          contractAbiManual,
+          signer
+        )
+        console.log(`Cid bytes: ${cid.bytes}`)
+        // const pieceKey = utils.formatBytes32String(commP)
+        // console.log(`Cid bytes with ethers: ${pieceKey}`)
+
+        // dealClient
+        //   .pieceRequests(cid.bytes)
+        //   .then((result) => {
+        //     console.log(result)
+        //     console.log(`Deal (piece) status: ${result.toString()}`)
+        //   })
+        //   .catch((error) => {
+        //     console.error(error)
+        //   })
+
+        const Status = {
+          None: 0,
+          RequestSubmitted: 1,
+          DealPublished: 2,
+          DealActivated: 3,
+          DealTerminated: 4,
+        }
+
+        const pieceStatus = await dealClient.pieceStatus(cid.bytes)
+
+        const statusEnum = Object.values(Status)[pieceStatus]
+
+        console.log(`Deal (piece) status: ${statusEnum.toString()}`)
+      } else {
+        console.log("Ethereum object doesn't exist!")
+      }
+    } catch (error) {
+      console.log(error)
+      setErrorMessageSubmit(
+        'Something went wrong. ' + error.name + ' ' + error.message
+      )
+      return
+    }
+  }
   useEffect(() => {
     checkWalletIsConnected()
   }, [])
@@ -328,6 +414,8 @@ function Inputs() {
       <div class='child-1-hg'>
         <div style={{ display: 'flex', width: '50%', margin: 'auto' }}>
           {dealIDButton()}
+          {dealsLengthButton()}
+          {dealStatusButton()}
         </div>
       </div>
       {dealID && (
