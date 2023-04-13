@@ -185,6 +185,7 @@ function Inputs() {
     cid = new CID(commP)
     var refresh = setInterval(async () => {
       console.log(`Cid bytes: ${cid.bytes}`)
+      console.log(cid.bytes)
       if (cid === undefined) {
         setDealID('Error: CID not found')
         clearInterval(refresh)
@@ -250,18 +251,7 @@ function Inputs() {
           signer
         )
         console.log(`Cid bytes: ${cid.bytes}`)
-        // const pieceKey = utils.formatBytes32String(commP)
-        // console.log(`Cid bytes with ethers: ${pieceKey}`)
-
-        // dealClient
-        //   .pieceRequests(cid.bytes)
-        //   .then((result) => {
-        //     console.log(result)
-        //     console.log(`Deal (piece) status: ${result.toString()}`)
-        //   })
-        //   .catch((error) => {
-        //     console.error(error)
-        //   })
+        console.log(cid.bytes)
 
         const Status = {
           None: 0,
@@ -287,6 +277,35 @@ function Inputs() {
       return
     }
   }
+
+  const dealIndexButton = () => {
+    return <button onClick={dealIndexHandler}>Deal Index 0</button>
+  }
+
+  const dealIndexHandler = async () => {
+    try {
+      const { ethereum } = window
+      if (ethereum) {
+        const provider = new ethers.BrowserProvider(ethereum)
+        const signer = await provider.getSigner()
+
+        dealClient = new ethers.Contract(contractAddress, contractABI, signer)
+
+        const dealInfo = await dealClient.getDealByIndex(0)
+
+        console.log(`Deal inf: ${dealInfo}`)
+      } else {
+        console.log("Ethereum object doesn't exist!")
+      }
+    } catch (error) {
+      console.log(error)
+      setErrorMessageSubmit(
+        'Something went wrong. ' + error.name + ' ' + error.message
+      )
+      return
+    }
+  }
+
   useEffect(() => {
     checkWalletIsConnected()
   }, [])
@@ -416,6 +435,7 @@ function Inputs() {
           {dealIDButton()}
           {dealsLengthButton()}
           {dealStatusButton()}
+          {dealIndexButton()}
         </div>
       </div>
       {dealID && (
